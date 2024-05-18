@@ -1,0 +1,4 @@
+# Project exclude paths
+/.aws-sam/
+/ErrorFunction/target/
+/HelloWorldFunction/target/
