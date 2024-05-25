@@ -68,13 +68,13 @@ Resources:
   ErrorSubscription1:
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: ravichandran.prabhakaran@gmail.com
+      Endpoint: email1@google.com
       Protocol: email
       TopicArn: !Ref 'ErrorSNSTopic'
   ErrorSubscription2:
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: pbkn@whysurfswim.com
+      Endpoint: email2@yahoo.com
       Protocol: email
       TopicArn: !Ref 'ErrorSNSTopic'
 
