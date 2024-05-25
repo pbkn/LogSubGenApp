@@ -22,7 +22,7 @@
                   <option value="IAM" />
                 </list>
               </option>
-              <option name="stackName" value="logsubgenapp" />
+              <option name="stackName" value="log-sub-gen-app" />
               <option name="tags">
                 <map />
               </option>

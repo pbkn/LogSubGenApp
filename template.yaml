@@ -37,6 +37,46 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${HelloWorldFunction}"
       RetentionInDays: 7
+      Tags:
+        - Key: Publisher
+          Value: AWS
+        - Key: Department
+          Value: IT
+        - Key: CostCenter
+          Value: "12345"
+        - Key: Owner
+          Value: "PBKN"
+        - Key: Project
+          Value: "LogSubGenApp"
+
+
+  ErrorSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: "ErrorNotification-SNS"
+      Tags:
+        - Key: Publisher
+          Value: AWS
+        - Key: Department
+          Value: IT
+        - Key: CostCenter
+          Value: "12345"
+        - Key: Owner
+          Value: "PBKN"
+        - Key: Project
+          Value: "LogSubGenApp"
+  ErrorSubscription1:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: ravichandran.prabhakaran@gmail.com
+      Protocol: email
+      TopicArn: !Ref 'ErrorSNSTopic'
+  ErrorSubscription2:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: pbkn@whysurfswim.com
+      Protocol: email
+      TopicArn: !Ref 'ErrorSNSTopic'
 
   ErrorFunctionRole:
     Type: AWS::IAM::Role
@@ -70,6 +110,7 @@ Resources:
         Variables:
           PARAM1: VALUE
           JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1 # More info about tiered compilation https://aws.amazon.com/blogs/compute/optimizing-aws-lambda-function-performance-for-java/
+          SNS_TOPIC_ARN: !Ref ErrorSNSTopic
       Events: #LogSubscription filter will be automatically added by SAM using this event
         CWLog:
           Type: CloudWatchLogs
@@ -83,6 +124,18 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${ErrorFunction}"
       RetentionInDays: 7
+      Tags:
+        - Key: Publisher
+          Value: AWS
+        - Key: Department
+          Value: IT
+        - Key: CostCenter
+          Value: "12345"
+        - Key: Owner
+          Value: "PBKN"
+        - Key: Project
+          Value: "LogSubGenApp"
+
 
 Outputs:
   HelloWorldFunction:
@@ -97,3 +150,6 @@ Outputs:
   ErrorFunctionIamRole:
     Description: "Explicit IAM Role created for Error function"
     Value: !GetAtt ErrorFunctionRole.Arn
+  ErrorSNSTopic:
+    Description: The ARN of the created SNS topic
+    Value: !Ref ErrorSNSTopic

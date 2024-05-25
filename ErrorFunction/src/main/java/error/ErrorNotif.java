@@ -7,17 +7,13 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.services.sns.SnsClient;
-import software.amazon.awssdk.services.sns.model.PublishRequest;
-import software.amazon.awssdk.services.sns.model.PublishResponse;
-import software.amazon.awssdk.services.sns.model.SnsException;
+import software.amazon.awssdk.services.sns.model.*;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 public class ErrorNotif implements RequestHandler<Map<String, Object>, String> {
@@ -64,11 +60,50 @@ public class ErrorNotif implements RequestHandler<Map<String, Object>, String> {
 
     private void processLogMessage(String message) {
         try (SnsClient snsClient = SnsClient.create()) {
-            String errorMsg = "Something unexpected happened! Go check your system";
+            String errorMsg = "Something unexpected happened! Go check your system " + message;
             errorMsg = errorMsg.concat(System.lineSeparator());
             errorMsg = errorMsg.concat("Go to https://ap-south-1.console.aws.amazon.com/console/home?region=ap-south-1#");
-            String topicArn = "arn:aws:sns:ap-south-1:401135408972:ErrorNotification"; // Already created and subscribed
+            String topicArn = System.getenv("SNS_TOPIC_ARN"); //SNS Topic created using SAM
+            List<Subscription> currentSubscriptions = listSNSSubscriptions(snsClient);
+            List<String> currentSubscriptionsEmail = new ArrayList<>();
+            for (Subscription subscription : currentSubscriptions) {
+                if (subscription.protocol().equals("email")) {
+                    currentSubscriptionsEmail.add(subscription.endpoint());
+                }
+            }
+            List<String> definedSubscriptions = Arrays
+                    .asList("email1@google.com", "email2@yahoo.com");
+            for (String driftedEmail : definedSubscriptions) {
+                if (!currentSubscriptionsEmail.contains(driftedEmail)) {
+                    subEmail(snsClient, topicArn, driftedEmail);
+                }
+            }
             pubTopic(snsClient, errorMsg, topicArn);
+        }
+    }
+
+    public static List<Subscription> listSNSSubscriptions(SnsClient snsClient) {
+        try {
+            ListSubscriptionsRequest request = ListSubscriptionsRequest.builder().build();
+
+            ListSubscriptionsResponse result = snsClient.listSubscriptions(request);
+            logger.info(result.subscriptions());
+            return result.subscriptions();
+        } catch (SnsException e) {
+            logger.error(e.awsErrorDetails().errorMessage());
+        }
+        return Collections.emptyList();
+    }
+
+    public static void subEmail(SnsClient snsClient, String topicArn, String email) {
+        try {
+            SubscribeRequest request = SubscribeRequest.builder().protocol("email").endpoint(email).returnSubscriptionArn(true).topicArn(topicArn).build();
+
+            SubscribeResponse result = snsClient.subscribe(request);
+            logger.info("Subscription ARN: {} Status is {}", result.subscriptionArn(), result.sdkHttpResponse().statusCode());
+
+        } catch (SnsException e) {
+            logger.error(e.awsErrorDetails().errorMessage());
         }
     }
 
